@@ -50,7 +50,7 @@ class CookieManager:
             if (not nid_aut or not nid_ses or 
                 nid_aut == 'YOUR_NID_AUT_HERE' or 
                 nid_ses == 'YOUR_NID_SES_HERE'):
-                logger.error("Cookie配置缺失或为占位符")
+                logger.error("Cookie configuration missing or placeholder")
                 return False
             
             # 测试 API 调用
@@ -68,17 +68,17 @@ class CookieManager:
             )
             
             if response.status_code == 200:
-                logger.info("Cookie验证成功")
+                logger.info("Cookie validation successful")
                 return True
             elif response.status_code == 500:
-                logger.warning("Cookie可能已过期 (HTTP 500)")
+                logger.warning("Cookie may have expired (HTTP 500)")
                 return False
             else:
-                logger.warning(f"Cookie验证失败: HTTP {response.status_code}")
+                logger.warning(f"Cookie validation failed: HTTP {response.status_code}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Cookie验证失败: {e}")
+            logger.error(f"Cookie validation failed: {e}")
             return False
     
     def should_check_cookies(self) -> bool:
@@ -97,29 +97,29 @@ class CookieManager:
         self.last_check_time = time.time()
         
         if self.validate_cookies():
-            logger.info("Cookie仍然有效")
+            logger.info("Cookie is still valid")
             return True
         else:
-            logger.warning("Cookie已失效，需要手动更新")
+            logger.warning("Cookie has expired, manual update required")
             self.notify_cookie_expired()
             return False
     
     def notify_cookie_expired(self):
-        """通知 Cookie 已过期"""
+        """Notify that Cookie has expired"""
         logger.error("=" * 60)
-        logger.error("🚨 COOKIE 已过期！")
+        logger.error("🚨 COOKIE EXPIRED!")
         logger.error("=" * 60)
-        logger.error("请按以下步骤更新 Cookie：")
+        logger.error("Please follow these steps to update your Cookie:")
         logger.error("")
-        logger.error("1. 打开浏览器，访问 https://chzzk.naver.com")
-        logger.error("2. 登录你的账号")
-        logger.error("3. 按 F12 打开开发者工具")
-        logger.error("4. 切换到 'Application' 或 '存储' 标签")
-        logger.error("5. 在左侧找到 'Cookies' -> 'https://chzzk.naver.com'")
-        logger.error("6. 复制 'NID_AUT' 和 'NID_SES' 的值")
-        logger.error("7. 更新 config_local.json 文件中的对应值")
+        logger.error("1. Open your browser and visit https://chzzk.naver.com")
+        logger.error("2. Log in to your account")
+        logger.error("3. Press F12 to open Developer Tools")
+        logger.error("4. Switch to 'Application' or 'Storage' tab")
+        logger.error("5. Find 'Cookies' -> 'https://chzzk.naver.com' on the left")
+        logger.error("6. Copy the values of 'NID_AUT' and 'NID_SES'")
+        logger.error("7. Update the corresponding values in config_local.json file")
         logger.error("")
-        logger.error("或者运行: python update_cookies.py")
+        logger.error("Or run: python update_cookies.py")
         logger.error("=" * 60)
     
     def get_cookies(self) -> Tuple[str, str]:
@@ -141,29 +141,29 @@ class CookieManager:
             
             # 验证新 Cookie
             if self.validate_cookies():
-                logger.info("Cookie更新成功并验证通过")
+                logger.info("Cookie updated successfully and validated")
                 return True
             else:
-                logger.error("Cookie更新失败，验证不通过")
+                logger.error("Cookie update failed, validation failed")
                 return False
                 
         except Exception as e:
-            logger.error(f"更新Cookie失败: {e}")
+            logger.error(f"Failed to update Cookie: {e}")
             return False
 
 def main():
-    """主函数 - 用于测试 Cookie 管理器"""
+    """Main function - for testing Cookie manager"""
     cookie_manager = CookieManager()
     
-    print("🍪 Cookie 管理器测试")
+    print("🍪 Cookie Manager Test")
     print("=" * 40)
     
-    # 检查当前 Cookie
-    print("检查当前 Cookie...")
+    # Check current Cookie
+    print("Checking current Cookie...")
     if cookie_manager.validate_cookies():
-        print("✅ Cookie 有效")
+        print("✅ Cookie is valid")
     else:
-        print("❌ Cookie 无效")
+        print("❌ Cookie is invalid")
         cookie_manager.notify_cookie_expired()
 
 if __name__ == "__main__":

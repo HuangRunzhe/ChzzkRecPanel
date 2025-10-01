@@ -112,7 +112,7 @@ class MultiChzzkRecorder:
                 chat_id=self.config['notifications']['telegram_chat_id']
             )
         except Exception as e:
-            logger.warning(f"Telegram通知器初始化失败: {e}")
+            logger.warning(f"Telegram notifier initialization failed: {e}")
             self.telegram_notifier = None
         self.ffmpeg_converter = FFmpegConverter(self.config['processing'])
         
@@ -179,10 +179,27 @@ class MultiChzzkRecorder:
                 for line in f:
                     channel_id = line.strip()
                     if channel_id:
+                        # 尝试从API获取频道信息
+                        try:
+                            channel_info = self.chzzk_api.get_channel_info(channel_id)
+                            if channel_info and 'channelName' in channel_info:
+                                channel_name = channel_info['channelName']
+                                channel_image = channel_info.get('channelImageUrl', '')
+                            else:
+                                # 如果API失败，使用频道ID前8位作为临时名称
+                                channel_name = f"Channel_{channel_id[:8]}"
+                                channel_image = ''
+                                logger.warning(f"Failed to get channel info for {channel_id}, using temporary name")
+                        except Exception as e:
+                            # API调用失败，使用临时名称
+                            channel_name = f"Channel_{channel_id[:8]}"
+                            channel_image = ''
+                            logger.warning(f"Failed to get channel info for {channel_id}: {e}")
+                        
                         channels.append({
                             'channel_id': channel_id,
-                            'channel_name': f"Channel_{channel_id[:8]}",
-                            'channel_image': ''
+                            'channel_name': channel_name,
+                            'channel_image': channel_image
                         })
             
             return channels
@@ -240,6 +257,12 @@ class MultiChzzkRecorder:
             status = self.check_channel_status(channel_id)
             if not status['isLive']:
                 return False
+            
+            # 检查是否有未完成的录制文件需要续录
+            resume_file = self.check_for_resume_recording(channel_id)
+            if resume_file:
+                logger.info(f"Found incomplete recording file for {channel_id}: {resume_file}")
+                return self.resume_recording(channel_id, resume_file, channel_data)
             
             # 根据订阅状态确定录制质量
             recording_quality = self.get_recording_quality(user_id)
@@ -364,7 +387,7 @@ class MultiChzzkRecorder:
             logger.error(f"Failed to start recording for {channel_id}: {e}")
             return False
 
-    def start_delayed_cover_capture(self, channel_id: str, recording_file_path: str):
+    def start_delayed_cover_capture(self, channel_id: str, recording_file_path: str, channel_name: str = None):
         """启动延迟封面截取任务"""
         def delayed_capture():
             try:
@@ -375,7 +398,7 @@ class MultiChzzkRecorder:
                 # 检查录制是否还在进行
                 if channel_id in self.recorder_processes:
                     logger.info(f"Starting cover capture for {channel_id}")
-                    cover_path = self.capture_cover_from_recording(channel_id, recording_file_path)
+                    cover_path = self.capture_cover_from_recording(channel_id, recording_file_path, channel_name)
                     
                     if cover_path:
                         logger.info(f"Cover captured successfully: {cover_path}")
@@ -553,7 +576,116 @@ class MultiChzzkRecorder:
         except Exception as e:
             logger.error(f"Failed to generate thumbnails: {e}")
 
-    def capture_cover_from_recording(self, channel_id: str, recording_file_path: str) -> str:
+    def check_for_resume_recording(self, channel_id: str) -> str:
+        """检查是否有未完成的录制文件需要续录"""
+        try:
+            recording_dir = os.path.join(self.config['recording']['recording_save_root_dir'])
+            if not os.path.exists(recording_dir):
+                return None
+            
+            # 查找该频道的未完成录制文件
+            for root, dirs, files in os.walk(recording_dir):
+                for file in files:
+                    if file.endswith('.ts') and channel_id in file:
+                        file_path = os.path.join(root, file)
+                        # 检查文件是否在最近24小时内被修改（表示可能是未完成的录制）
+                        mtime = os.path.getmtime(file_path)
+                        if time.time() - mtime < 86400:  # 24小时内
+                            # 检查文件大小是否合理（至少几MB）
+                            file_size = os.path.getsize(file_path)
+                            if file_size > 1024 * 1024:  # 至少1MB
+                                logger.info(f"Found potential resume file: {file_path} (size: {file_size} bytes)")
+                                return file_path
+            return None
+        except Exception as e:
+            logger.error(f"Failed to check for resume recording: {e}")
+            return None
+
+    def resume_recording(self, channel_id: str, existing_file: str, channel_data: Dict) -> bool:
+        """续录现有的录制文件"""
+        try:
+            logger.info(f"Resuming recording for {channel_id} from {existing_file}")
+            
+            # 获取频道状态
+            status = self.check_channel_status(channel_id)
+            if not status['isLive']:
+                logger.warning(f"Channel {channel_id} is no longer live, cannot resume recording")
+                return False
+            
+            # 构建续录文件名（在原文件名后添加续录标识）
+            base_name = os.path.splitext(existing_file)[0]
+            resume_file = f"{base_name}_resume_{int(time.time())}.ts"
+            
+            # 构建streamlink命令进行续录
+            stream_url = f"https://chzzk.naver.com/live/{channel_id}"
+            command = [
+                "streamlink",
+                stream_url,
+                self.config['recording']['quality'],
+                "-o", resume_file,
+                "--retry-streams", "5",
+                "--retry-max", "10"
+            ]
+            
+            logger.info(f"Starting resume recording: {channel_id}")
+            logger.info(f"Command: {' '.join(command)}")
+            
+            # 启动录制进程
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            # 记录录制信息
+            self.recorder_processes[channel_id] = {
+                'process': process,
+                'start_time': datetime.datetime.now(),
+                'file_path': resume_file,
+                'original_file': existing_file,
+                'is_resume': True,
+                'channel_data': channel_data
+            }
+            
+            # 启动延迟封面截取任务
+            self.start_delayed_cover_capture(channel_id, resume_file, channel_data.get('channel_name'))
+            
+            # 发送续录通知
+            self.send_resume_notification(channel_id, existing_file, resume_file)
+            
+            logger.info(f"Resume recording started successfully for {channel_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to resume recording for {channel_id}: {e}")
+            return False
+
+    def send_resume_notification(self, channel_id: str, original_file: str, resume_file: str):
+        """发送续录通知"""
+        try:
+            channel_name = self.recorder_processes.get(channel_id, {}).get('channel_data', {}).get('channel_name', 'Unknown')
+            
+            message = f"🔄 Recording resumed for {channel_name}\n"
+            message += f"📁 Original file: {os.path.basename(original_file)}\n"
+            message += f"📁 Resume file: {os.path.basename(resume_file)}\n"
+            message += f"⏰ Resumed at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            
+            # 发送Telegram通知
+            if self.config.get('notifications', {}).get('use_telegram_bot', False):
+                try:
+                    self.telegram_notifier.send_message(message)
+                    logger.info("Sent Telegram resume notification")
+                except Exception as e:
+                    logger.warning(f"Failed to send Telegram resume notification: {e}")
+            
+            # 发送Discord通知
+            if self.config.get('notifications', {}).get('use_discord_bot', False):
+                try:
+                    self.discord_notifier.send_message(message)
+                    logger.info("Sent Discord resume notification")
+                except Exception as e:
+                    logger.warning(f"Failed to send Discord resume notification: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to send resume notification: {e}")
+
+    def capture_cover_from_recording(self, channel_id: str, recording_file_path: str, channel_name: str = None) -> str:
         """从正在录制的视频中截取封面"""
         try:
             # 等待录制文件有一定大小（至少几MB）
@@ -579,9 +711,15 @@ class MultiChzzkRecorder:
             screenshot_dir = os.path.join(self.config['recording']['recording_save_root_dir'], 'screenshots')
             os.makedirs(screenshot_dir, exist_ok=True)
             
-            # 生成封面文件名
+            # 生成封面文件名 - 使用频道名称和直播时间
             timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"{channel_id}_{timestamp}_cover.jpg"
+            if channel_name:
+                # 清理频道名称，移除特殊字符
+                import re
+                safe_name = re.sub(r'[<>:"/\\|?*]', '_', channel_name)
+                filename = f"{safe_name}_{timestamp}_cover.jpg"
+            else:
+                filename = f"{channel_id}_{timestamp}_cover.jpg"
             cover_path = os.path.join(screenshot_dir, filename)
             
             # 使用ffmpeg从录制视频中截取封面（取视频中间位置的一帧）
@@ -828,14 +966,14 @@ class MultiChzzkRecorder:
         """发送Discord通知"""
         try:
             if not self.config['notifications']['use_discord_bot']:
-                logger.info("Discord通知已禁用")
+                logger.info("Discord notifications disabled")
                 return
             
             token = self.config['notifications']['discord_bot_token']
             channel_id = self.config['notifications']['discord_channel_id']
             
             if not token or not channel_id:
-                logger.warning("Discord配置无效")
+                logger.warning("Discord configuration invalid")
                 return
             
             # 创建embed消息
@@ -875,9 +1013,9 @@ class MultiChzzkRecorder:
                         response = requests.post(url, headers=headers, files=files, data=payload, timeout=30)
                         
                         if response.status_code == 200:
-                            logger.info("Discord通知发送成功（带图片）")
+                            logger.info("Discord notification sent successfully (with image)")
                         else:
-                            logger.error(f"Discord通知发送失败: {response.status_code} - {response.text}")
+                            logger.error(f"Discord notification failed: {response.status_code} - {response.text}")
                             
                 except Exception as e:
                     logger.error(f"Failed to upload image to Discord: {e}")
@@ -920,9 +1058,9 @@ class MultiChzzkRecorder:
             response = requests.post(url, json=message_data, headers=headers, timeout=10)
             
             if response.status_code == 200:
-                logger.info("Discord通知发送成功（纯文本）")
+                logger.info("Discord notification sent successfully (text only)")
             else:
-                logger.error(f"Discord通知发送失败: {response.status_code} - {response.text}")
+                logger.error(f"Discord notification failed: {response.status_code} - {response.text}")
                 
         except Exception as e:
             logger.error(f"Failed to send Discord text notification: {e}")
@@ -1044,7 +1182,7 @@ Duration: {duration}
             try:
                 # 检查 Cookie 有效性
                 if not self.cookie_manager.check_and_update_cookies():
-                    logger.error("Cookie 已失效，跳过本次检查")
+                    logger.error("Cookie has expired, skipping this check")
                     time.sleep(self.config['recording']['interval'])
                     continue
                 

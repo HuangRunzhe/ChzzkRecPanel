@@ -93,8 +93,14 @@ class RecorderPanel {
         }
     }
 
+    updateChannels(channels) {
+        this.channels = channels || [];
+        this.renderChannels();
+        this.updateChannelStats();
+    }
+
     renderChannels() {
-        const tbody = document.getElementById('channels-table');
+        const tbody = document.getElementById('channels-table-body');
         tbody.innerHTML = '';
 
         if (this.channels.length === 0) {
@@ -197,6 +203,10 @@ class RecorderPanel {
     populateConfigForm() {
         // 录制配置
         if (this.config.recording) {
+            // 认证配置
+            document.getElementById('nid-aut').value = this.config.recording.nid_aut || '';
+            document.getElementById('nid-ses').value = this.config.recording.nid_ses || '';
+            
             document.getElementById('recording-quality').value = this.config.recording.quality || 'best';
             document.getElementById('recording-interval').value = this.config.recording.interval || 600;
             document.getElementById('recording-save-dir').value = this.config.recording.recording_save_root_dir || 'download/';
@@ -284,15 +294,18 @@ class RecorderPanel {
 
     async previewChannelInfo(channelId) {
         try {
-            const response = await fetch(`https://api.chzzk.naver.com/service/v1/channels/${channelId}`);
+            const response = await fetch(`/api/channel-preview/${channelId}`);
             const data = await response.json();
             
-            if (data.content) {
-                const content = data.content;
-                document.getElementById('preview-image').src = content.channelImageUrl || '/static/img/default-avatar.png';
-                document.getElementById('preview-name').textContent = content.channelName || '未知频道';
+            if (data.success && data.channel) {
+                const channel = data.channel;
+                document.getElementById('preview-image').src = channel.channelImageUrl || '/static/img/default-avatar.png';
+                document.getElementById('preview-name').textContent = channel.channelName || 'Unknown Channel';
                 document.getElementById('preview-id').textContent = channelId;
                 document.getElementById('channel-preview').style.display = 'block';
+            } else {
+                console.error('Channel preview failed:', data.error);
+                document.getElementById('channel-preview').style.display = 'none';
             }
         } catch (error) {
             console.error('Failed to preview channel:', error);
@@ -336,7 +349,11 @@ async function addChannel() {
     const channelId = document.getElementById('new-channel-id').value.trim();
     
     if (!channelId) {
-        panel.showAlert('请输入频道ID', 'warning');
+        if (window.panel) {
+            window.panel.showAlert(t('messages.invalid_channel_id'), 'warning');
+        } else {
+            alert(t('messages.invalid_channel_id'));
+        }
         return;
     }
 
@@ -352,17 +369,28 @@ async function addChannel() {
         const result = await response.json();
         
         if (result.success) {
-            panel.showAlert(t('messages.channel_added'), 'success');
-            panel.loadChannels();
+            if (window.panel) {
+                window.panel.showAlert(t('messages.channel_added'), 'success');
+                window.panel.loadChannels();
+            }
             bootstrap.Modal.getInstance(document.getElementById('addChannelModal')).hide();
             document.getElementById('new-channel-id').value = '';
-            document.getElementById('channel-preview').style.display = 'none';
+            const preview = document.getElementById('channel-preview');
+            if (preview) preview.style.display = 'none';
         } else {
-            panel.showAlert(result.error || t('messages.add_failed'), 'danger');
+            if (window.panel) {
+                window.panel.showAlert(result.error || t('messages.add_failed'), 'danger');
+            } else {
+                alert(result.error || t('messages.add_failed'));
+            }
         }
     } catch (error) {
         console.error('Failed to add channel:', error);
-        panel.showAlert(t('messages.add_failed'), 'danger');
+        if (window.panel) {
+            window.panel.showAlert(t('messages.add_failed'), 'danger');
+        } else {
+            alert(t('messages.add_failed'));
+        }
     }
 }
 
@@ -379,19 +407,71 @@ async function deleteChannel(channelId) {
         const result = await response.json();
         
         if (result.success) {
-            panel.showAlert(t('messages.channel_deleted'), 'success');
-            panel.loadChannels();
+            if (window.panel) {
+                window.panel.showAlert(t('messages.channel_deleted'), 'success');
+                window.panel.loadChannels();
+            }
         } else {
-            panel.showAlert(result.error || t('messages.delete_failed'), 'danger');
+            if (window.panel) {
+                window.panel.showAlert(result.error || t('messages.delete_failed'), 'danger');
+            } else {
+                alert(result.error || t('messages.delete_failed'));
+            }
         }
     } catch (error) {
         console.error('Failed to delete channel:', error);
-        panel.showAlert(t('messages.delete_failed'), 'danger');
+        if (window.panel) {
+            window.panel.showAlert(t('messages.delete_failed'), 'danger');
+        } else {
+            alert(t('messages.delete_failed'));
+        }
     }
 }
 
 function previewChannel(channelId) {
     window.open(`https://chzzk.naver.com/live/${channelId}`, '_blank');
+}
+
+async function saveAuthConfig() {
+    const config = {
+        recording: {
+            nid_aut: document.getElementById('nid-aut').value,
+            nid_ses: document.getElementById('nid-ses').value
+        }
+    };
+
+    try {
+        const response = await fetch('/api/config', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(config)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            if (window.panel) {
+                window.panel.showAlert(t('messages.auth_saved'), 'success');
+            } else {
+                alert(t('messages.auth_saved'));
+            }
+        } else {
+            if (window.panel) {
+                window.panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            } else {
+                alert(result.error || t('messages.save_failed'));
+            }
+        }
+    } catch (error) {
+        console.error('Failed to save auth config:', error);
+        if (window.panel) {
+            window.panel.showAlert(t('messages.save_failed'), 'danger');
+        } else {
+            alert(t('messages.save_failed'));
+        }
+    }
 }
 
 async function saveRecordingConfig() {
@@ -420,13 +500,25 @@ async function saveRecordingConfig() {
         const result = await response.json();
         
         if (result.success) {
-            panel.showAlert(t('messages.config_saved'), 'success');
+            if (window.panel) {
+                window.panel.showAlert(t('messages.config_saved'), 'success');
+            } else {
+                alert(t('messages.config_saved'));
+            }
         } else {
-            panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            if (window.panel) {
+                window.panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            } else {
+                alert(result.error || t('messages.save_failed'));
+            }
         }
     } catch (error) {
         console.error('Failed to save recording config:', error);
-        panel.showAlert(t('messages.save_failed'), 'danger');
+        if (window.panel) {
+            window.panel.showAlert(t('messages.save_failed'), 'danger');
+        } else {
+            alert(t('messages.save_failed'));
+        }
     }
 }
 
@@ -454,13 +546,25 @@ async function saveNotificationConfig() {
         const result = await response.json();
         
         if (result.success) {
-            panel.showAlert(t('messages.config_saved'), 'success');
+            if (window.panel) {
+                window.panel.showAlert(t('messages.config_saved'), 'success');
+            } else {
+                alert(t('messages.config_saved'));
+            }
         } else {
-            panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            if (window.panel) {
+                window.panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            } else {
+                alert(result.error || t('messages.save_failed'));
+            }
         }
     } catch (error) {
         console.error('Failed to save notification config:', error);
-        panel.showAlert(t('messages.save_failed'), 'danger');
+        if (window.panel) {
+            window.panel.showAlert(t('messages.save_failed'), 'danger');
+        } else {
+            alert(t('messages.save_failed'));
+        }
     }
 }
 
@@ -492,13 +596,25 @@ async function saveProcessingConfig() {
         const result = await response.json();
         
         if (result.success) {
-            panel.showAlert(t('messages.config_saved'), 'success');
+            if (window.panel) {
+                window.panel.showAlert(t('messages.config_saved'), 'success');
+            } else {
+                alert(t('messages.config_saved'));
+            }
         } else {
-            panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            if (window.panel) {
+                window.panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            } else {
+                alert(result.error || t('messages.save_failed'));
+            }
         }
     } catch (error) {
         console.error('Failed to save processing config:', error);
-        panel.showAlert(t('messages.save_failed'), 'danger');
+        if (window.panel) {
+            window.panel.showAlert(t('messages.save_failed'), 'danger');
+        } else {
+            alert(t('messages.save_failed'));
+        }
     }
 }
 
@@ -524,22 +640,78 @@ async function saveSystemConfig() {
         const result = await response.json();
         
         if (result.success) {
-            panel.showAlert(t('messages.config_saved'), 'success');
+            if (window.panel) {
+                window.panel.showAlert(t('messages.config_saved'), 'success');
+            } else {
+                alert(t('messages.config_saved'));
+            }
         } else {
-            panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            if (window.panel) {
+                window.panel.showAlert(result.error || t('messages.save_failed'), 'danger');
+            } else {
+                alert(result.error || t('messages.save_failed'));
+            }
         }
     } catch (error) {
         console.error('Failed to save system config:', error);
-        panel.showAlert(t('messages.save_failed'), 'danger');
+        if (window.panel) {
+            window.panel.showAlert(t('messages.save_failed'), 'danger');
+        } else {
+            alert(t('messages.save_failed'));
+        }
     }
 }
 
 function refreshLogs() {
-    panel.loadLogs();
+    if (window.panel) {
+        window.panel.loadLogs();
+    }
+}
+
+// 页面切换功能
+function showPage(pageId) {
+    // 隐藏所有页面
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.style.display = 'none';
+    });
+    
+    // 显示指定页面
+    document.getElementById(`page-${pageId}`).style.display = 'block';
+    
+    // 更新导航栏活动状态
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    document.getElementById(`nav-${pageId}`).classList.add('active');
+    
+    // 刷新数据
+    if (window.panel) {
+        switch(pageId) {
+            case 'channels':
+                window.panel.loadChannels();
+                break;
+            case 'config':
+                window.panel.loadConfig();
+                break;
+            case 'logs':
+                window.panel.loadLogs();
+                break;
+            case 'dashboard':
+                window.panel.loadStatus();
+                break;
+        }
+    }
+}
+
+function refreshData() {
+    if (window.panel) {
+        window.panel.loadData();
+    }
 }
 
 // 初始化应用
 let panel;
 document.addEventListener('DOMContentLoaded', () => {
     panel = new RecorderPanel();
+    window.panel = panel; // 设置为全局变量
 });
