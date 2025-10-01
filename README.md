@@ -4,6 +4,7 @@ A powerful Chzzk live stream recording tool with multi-channel monitoring, autom
 
 
 ![System Logs](assets/screenshots/logo.png)
+*logo*
 一个功能强大的Chzzk直播录制工具，支持多频道监控、自动录制、转码和通知功能。
 Chzzk 라이브 스트림 녹화를 위한 강력한 도구로, 다중 채널 모니터링, 자동 녹화, 트랜스코딩 및 알림 기능을 지원합니다.
 
