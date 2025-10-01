@@ -1,0 +1,47 @@
+{
+  "server": {
+    "api_url": "http://localhost:5000",
+    "timeout": 10,
+    "retry_count": 3
+  },
+  "recording": {
+    "nid_aut": "YOUR_NID_AUT_HERE",
+    "nid_ses": "YOUR_NID_SES_HERE",
+    "recording_save_root_dir": "download/",
+    "quality": "best",
+    "record_chat": true,
+    "file_name_format": "{stream_started}.ts",
+    "vod_name_format": "[{username}]{stream_started}_{escaped_title}.mp4",
+    "time_format": "%y-%m-%d",
+    "msg_time_format": "%Y년 %m월 %d일 %H시 %M분 %S초",
+    "fallback_to_current_dir": true,
+    "mount_command": "",
+    "interval": 600
+  },
+  "notifications": {
+    "use_discord_bot": false,
+    "discord_bot_token": "YOUR_DISCORD_BOT_TOKEN",
+    "discord_channel_id": "YOUR_DISCORD_CHANNEL_ID",
+    "use_telegram_bot": false,
+    "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
+    "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID"
+  },
+  "processing": {
+    "auto_convert_to_mp4": true,
+    "delete_ts_after_conversion": true,
+    "ffmpeg_preset": "medium",
+    "ffmpeg_crf": 23,
+    "generate_thumbnails": true,
+    "thumbnail_count": 6,
+    "thumbnail_width": 320,
+    "thumbnail_height": 180,
+    "cover_image_width": 1280,
+    "cover_image_height": 720
+  },
+  "system": {
+    "zmq_port": 5555,
+    "check_interval": 120,
+    "max_restart_attempts": 5,
+    "restart_delay": 30
+  }
+}

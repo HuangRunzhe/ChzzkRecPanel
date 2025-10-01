@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">Chzzk Recorder Management Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-camera-video"></i>
+                <span data-i18n="nav.title">Chzzk Recorder Management Panel</span>
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <div class="dropdown me-3">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate"></i>
+                        <span id="current-lang">EN</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="changeLanguage('en')">English</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeLanguage('zh')">中文</a></li>
+                    </ul>
+                </div>
+                <span class="navbar-text" id="status-indicator">
+                    <i class="bi bi-circle-fill text-success"></i>
+                    <span data-i18n="nav.status.running">System Running</span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- 状态概览 -->
+        <div class="row mb-4 p-4">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title" data-i18n="stats.total_channels">Total Channels</h6>
+                                <h3 id="total-channels">0</h3>
+                            </div>
+                            <i class="bi bi-people fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title" data-i18n="stats.live_channels">Live Channels</h6>
+                                <h3 id="live-channels">0</h3>
+                            </div>
+                            <i class="bi bi-broadcast fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title" data-i18n="stats.recording_channels">Recording</h6>
+                                <h3 id="recording-channels">0</h3>
+                            </div>
+                            <i class="bi bi-record-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title" data-i18n="stats.last_update">Last Update</h6>
+                                <small id="last-update">--</small>
+                            </div>
+                            <i class="bi bi-clock fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="row px-4 pb-4">
+            <!-- 频道管理 -->
+            <div class="col-md-8">
+                <div class="card main-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people"></i>
+                            <span data-i18n="channels.title">Channel Management</span>
+                        </h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addChannelModal">
+                            <i class="bi bi-plus"></i>
+                            <span data-i18n="channels.add">Add Channel</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="channels.avatar">Avatar</th>
+                                        <th data-i18n="channels.name">Channel Name</th>
+                                        <th data-i18n="channels.id">Channel ID</th>
+                                        <th data-i18n="channels.status">Status</th>
+                                        <th data-i18n="channels.viewers">Viewers</th>
+                                        <th data-i18n="channels.actions">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="channels-table">
+                                    <!-- 频道数据将通过JavaScript动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 配置管理 -->
+            <div class="col-md-4">
+                <div class="card main-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear"></i>
+                            <span data-i18n="config.title">Configuration Management</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="configAccordion">
+                            <!-- 录制配置 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#recordingConfig">
+                                        <span data-i18n="config.recording.title">Recording Settings</span>
+                                    </button>
+                                </h2>
+                                <div id="recordingConfig" class="accordion-collapse collapse show" data-bs-parent="#configAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.recording.quality">Recording Quality</label>
+                                            <select class="form-select" id="recording-quality">
+                                                <option value="best" data-i18n="config.recording.quality.best">Best Quality</option>
+                                                <option value="1080p">1080p</option>
+                                                <option value="720p">720p</option>
+                                                <option value="480p">480p</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.recording.interval">Check Interval (seconds)</label>
+                                            <input type="number" class="form-control" id="recording-interval" min="60" max="3600">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.recording.save_dir">Save Directory</label>
+                                            <input type="text" class="form-control" id="recording-save-dir" placeholder="download/">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.recording.file_format">File Name Format</label>
+                                            <input type="text" class="form-control" id="file-name-format" placeholder="{stream_started}.ts">
+                                            <div class="form-text" data-i18n="config.recording.file_format.help">Available variables: {stream_started}, {username}, {escaped_title}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.recording.vod_format">VOD Name Format</label>
+                                            <input type="text" class="form-control" id="vod-name-format" placeholder="[{username}]{stream_started}_{escaped_title}.mp4">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.recording.time_format">Time Format</label>
+                                            <input type="text" class="form-control" id="time-format" placeholder="%y-%m-%d">
+                                            <div class="form-text" data-i18n="config.recording.time_format.help">Python strftime format</div>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="record-chat">
+                                            <label class="form-check-label" for="record-chat" data-i18n="config.recording.record_chat">Record Chat Messages</label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="fallback-current-dir">
+                                            <label class="form-check-label" for="fallback-current-dir" data-i18n="config.recording.fallback_dir">Fallback to Current Directory</label>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="saveRecordingConfig()">
+                                            <i class="bi bi-check"></i>
+                                            <span data-i18n="common.save">Save</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 通知配置 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#notificationConfig">
+                                        <span data-i18n="config.notifications.title">Notification Settings</span>
+                                    </button>
+                                </h2>
+                                <div id="notificationConfig" class="accordion-collapse collapse" data-bs-parent="#configAccordion">
+                                    <div class="accordion-body">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="use-telegram">
+                                            <label class="form-check-label" for="use-telegram" data-i18n="config.notifications.use_telegram">Enable Telegram Notifications</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.notifications.telegram_token">Telegram Bot Token</label>
+                                            <input type="text" class="form-control" id="telegram-token" placeholder="Enter Bot Token">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.notifications.telegram_chat_id">Telegram Chat ID</label>
+                                            <input type="text" class="form-control" id="telegram-chat-id" placeholder="Enter Chat ID">
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="use-discord">
+                                            <label class="form-check-label" for="use-discord" data-i18n="config.notifications.use_discord">Enable Discord Notifications</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.notifications.discord_token">Discord Bot Token</label>
+                                            <input type="text" class="form-control" id="discord-token" placeholder="Enter Bot Token">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.notifications.discord_channel_id">Discord Channel ID</label>
+                                            <input type="text" class="form-control" id="discord-channel-id" placeholder="Enter Channel ID">
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="saveNotificationConfig()">
+                                            <i class="bi bi-check"></i>
+                                            <span data-i18n="common.save">Save</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 处理配置 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#processingConfig">
+                                        <span data-i18n="config.processing.title">Processing Settings</span>
+                                    </button>
+                                </h2>
+                                <div id="processingConfig" class="accordion-collapse collapse" data-bs-parent="#configAccordion">
+                                    <div class="accordion-body">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="auto-convert">
+                                            <label class="form-check-label" for="auto-convert" data-i18n="config.processing.auto_convert">Auto Convert to MP4</label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="delete-ts">
+                                            <label class="form-check-label" for="delete-ts" data-i18n="config.processing.delete_ts">Delete TS After Conversion</label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="generate-thumbnails">
+                                            <label class="form-check-label" for="generate-thumbnails" data-i18n="config.processing.generate_thumbnails">Generate Thumbnails</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.processing.ffmpeg_preset">FFmpeg Preset</label>
+                                            <select class="form-select" id="ffmpeg-preset">
+                                                <option value="ultrafast">ultrafast</option>
+                                                <option value="superfast">superfast</option>
+                                                <option value="veryfast">veryfast</option>
+                                                <option value="faster">faster</option>
+                                                <option value="fast">fast</option>
+                                                <option value="medium">medium</option>
+                                                <option value="slow">slow</option>
+                                                <option value="slower">slower</option>
+                                                <option value="veryslow">veryslow</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.processing.ffmpeg_crf">FFmpeg CRF</label>
+                                            <input type="number" class="form-control" id="ffmpeg-crf" min="0" max="51" value="23">
+                                            <div class="form-text" data-i18n="config.processing.ffmpeg_crf.help">Lower = better quality, higher = smaller file</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.processing.thumbnail_count">Thumbnail Count</label>
+                                            <input type="number" class="form-control" id="thumbnail-count" min="1" max="20" value="6">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="form-label" data-i18n="config.processing.thumbnail_width">Thumbnail Width</label>
+                                                <input type="number" class="form-control" id="thumbnail-width" min="100" max="1920" value="320">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-i18n="config.processing.thumbnail_height">Thumbnail Height</label>
+                                                <input type="number" class="form-control" id="thumbnail-height" min="100" max="1080" value="180">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-6">
+                                                <label class="form-label" data-i18n="config.processing.cover_width">Cover Width</label>
+                                                <input type="number" class="form-control" id="cover-width" min="100" max="1920" value="1280">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-i18n="config.processing.cover_height">Cover Height</label>
+                                                <input type="number" class="form-control" id="cover-height" min="100" max="1080" value="720">
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm mt-3" onclick="saveProcessingConfig()">
+                                            <i class="bi bi-check"></i>
+                                            <span data-i18n="common.save">Save</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 系统配置 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#systemConfig">
+                                        <span data-i18n="config.system.title">System Settings</span>
+                                    </button>
+                                </h2>
+                                <div id="systemConfig" class="accordion-collapse collapse" data-bs-parent="#configAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.system.zmq_port">ZMQ Port</label>
+                                            <input type="number" class="form-control" id="zmq-port" min="1000" max="65535" value="5555">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.system.check_interval">Check Interval (seconds)</label>
+                                            <input type="number" class="form-control" id="check-interval" min="30" max="3600" value="120">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.system.max_restart_attempts">Max Restart Attempts</label>
+                                            <input type="number" class="form-control" id="max-restart-attempts" min="1" max="20" value="5">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="config.system.restart_delay">Restart Delay (seconds)</label>
+                                            <input type="number" class="form-control" id="restart-delay" min="5" max="300" value="30">
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="saveSystemConfig()">
+                                            <i class="bi bi-check"></i>
+                                            <span data-i18n="common.save">Save</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日志区域 -->
+        <div class="row px-4 pb-4">
+            <div class="col-12">
+                <div class="card main-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-journal-text"></i>
+                            <span data-i18n="logs.title">System Logs</span>
+                        </h5>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            <span data-i18n="logs.refresh">Refresh</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-container" id="log-container">
+                            <div class="text-muted text-center">Loading logs...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加频道模态框 -->
+    <div class="modal fade" id="addChannelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="modal.add_channel.title">Add Channel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" data-i18n="modal.add_channel.channel_id">Channel ID</label>
+                        <input type="text" class="form-control" id="new-channel-id" placeholder="Enter Chzzk Channel ID">
+                        <div class="form-text" data-i18n="modal.add_channel.help">Get Channel ID from Chzzk channel page URL</div>
+                    </div>
+                    <div id="channel-preview" class="mt-3" style="display: none;">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <img id="preview-image" src="" class="rounded me-3" style="width: 50px; height: 50px;">
+                                    <div>
+                                        <h6 id="preview-name" class="mb-0"></h6>
+                                        <small id="preview-id" class="text-muted"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="common.cancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addChannel()" data-i18n="common.add">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
