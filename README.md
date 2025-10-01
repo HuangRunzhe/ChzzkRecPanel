@@ -1,10 +1,29 @@
-# Multi Chzzk Recorder / 多频道Chzzk录制器 / 멀티 Chzzk 녹화기
+# Multi Chzzk Recorder Panel / 多频道Chzzk录制器面板 / 멀티 Chzzk 녹화기
 
 A powerful Chzzk live stream recording tool with multi-channel monitoring, automatic recording, transcoding, and notification features.
 
-一个功能强大的Chzzk直播录制工具，支持多频道监控、自动录制、转码和通知功能。
+
 ![System Logs](assets/screenshots/logo.png)
+一个功能强大的Chzzk直播录制工具，支持多频道监控、自动录制、转码和通知功能。
 Chzzk 라이브 스트림 녹화를 위한 강력한 도구로, 다중 채널 모니터링, 자동 녹화, 트랜스코딩 및 알림 기능을 지원합니다.
+
+## 📸 Screenshots / 截图 / 스크린샷
+
+### Web Management Panel / Web管理面板 / 웹 관리 패널
+![Web Panel Dashboard](assets/screenshots/web-panel-dashboard.png)
+*Main dashboard showing recording status and channel management / 主仪表板显示录制状态和频道管理 / 녹화 상태 및 채널 관리가 표시되는 메인 대시보드*
+
+### Channel Management / 频道管理 / 채널 관리
+![Channel Management](assets/screenshots/channel-management.png)
+*Add and manage recording channels with live preview / 添加和管理录制频道，带实时预览 / 라이브 미리보기와 함께 녹화 채널 추가 및 관리*
+
+### Configuration Settings / 配置设置 / 설정 구성
+![Configuration Panel](assets/screenshots/configuration-panel.png)
+*Comprehensive configuration options for recording, notifications, and processing / 录制、通知和处理的综合配置选项 / 녹화, 알림 및 처리를 위한 포괄적인 설정 옵션*
+
+### System Logs / 系统日志 / 시스템 로그
+![System Logs](assets/screenshots/system-logs.png)
+*Real-time system monitoring and log viewing / 实时系统监控和日志查看 / 실시간 시스템 모니터링 및 로그 보기*
 
 ## 🚀 Quick Start / 快速开始 / 빠른 시작
 
@@ -111,23 +130,7 @@ python examples/manual_convert.py
 python examples/update_cookies.py
 ```
 
-## 📸 Screenshots / 截图 / 스크린샷
 
-### Web Management Panel / Web管理面板 / 웹 관리 패널
-![Web Panel Dashboard](assets/screenshots/web-panel-dashboard.png)
-*Main dashboard showing recording status and channel management / 主仪表板显示录制状态和频道管理 / 녹화 상태 및 채널 관리가 표시되는 메인 대시보드*
-
-### Channel Management / 频道管理 / 채널 관리
-![Channel Management](assets/screenshots/channel-management.png)
-*Add and manage recording channels with live preview / 添加和管理录制频道，带实时预览 / 라이브 미리보기와 함께 녹화 채널 추가 및 관리*
-
-### Configuration Settings / 配置设置 / 설정 구성
-![Configuration Panel](assets/screenshots/configuration-panel.png)
-*Comprehensive configuration options for recording, notifications, and processing / 录制、通知和处理的综合配置选项 / 녹화, 알림 및 처리를 위한 포괄적인 설정 옵션*
-
-### System Logs / 系统日志 / 시스템 로그
-![System Logs](assets/screenshots/system-logs.png)
-*Real-time system monitoring and log viewing / 实时系统监控和日志查看 / 실시간 시스템 모니터링 및 로그 보기*
 
 ## 📝 Notes / 注意事项 / 주의사항
 
@@ -135,11 +138,3 @@ python examples/update_cookies.py
 - Ensure sufficient disk space for recording / 确保有足够的磁盘空间用于录制 / 녹화를 위한 충분한 디스크 공간 확보
 - Regularly clean up old recording files / 建议定期清理旧的录制文件 / 오래된 녹화 파일 정기적 정리 권장
 - Web panel runs on port 8080 by default / Web面板默认运行在8080端口 / 웹 패널은 기본적으로 8080 포트에서 실행
-
-## 📄 License / 许可证 / 라이선스
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-MIT许可证 - 详见[LICENSE](LICENSE)文件。
-
-MIT 라이선스 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
