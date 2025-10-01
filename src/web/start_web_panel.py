@@ -8,7 +8,11 @@ import os
 import sys
 import argparse
 import logging
-from web_panel import RecorderWebPanel
+
+# 添加src目录到Python路径
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from web.web_panel import RecorderWebPanel
 
 def main():
     parser = argparse.ArgumentParser(description='Chzzk录制程序Web管理面板')

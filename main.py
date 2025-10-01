@@ -31,7 +31,12 @@ def main():
         recorder_main()
     elif args.mode == 'web':
         from src.web.start_web_panel import main as web_main
-        sys.argv = ['start_web_panel.py', '--host', args.host, '--port', str(args.port)]
+        # 设置配置文件路径
+        sys.argv = ['start_web_panel.py', 
+                   '--host', args.host, 
+                   '--port', str(args.port),
+                   '--config', args.config,
+                   '--record-list', 'src/config/record_list.txt']
         if args.debug:
             sys.argv.append('--debug')
         web_main()

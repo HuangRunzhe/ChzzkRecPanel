@@ -1,105 +1,130 @@
 # Multi Chzzk Recorder
 
-一个功能强大的Chzzk直播录制工具，支持多频道监控、自动录制、转码和通知功能。
+A powerful Chzzk live stream recording tool with multi-channel monitoring, automatic recording, transcoding, and notification features.
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-1. **安装依赖**
+1. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **配置设置**
-   - 复制 `src/config/config_local.json.example` 为 `src/config/config_local.json`
-   - 编辑配置文件，填入你的Chzzk认证信息和其他设置
+2. **Configure Settings**
+   - Copy `src/config/config_local.json.example` to `src/config/config_local.json`
+   - Edit the configuration file and add your Chzzk authentication information
 
-3. **启动录制器**
+3. **Start Recorder**
    ```bash
    python main.py --mode recorder
    ```
 
-4. **启动Web管理面板**
+4. **Start Web Management Panel**
    ```bash
    python main.py --mode web
    ```
-   然后访问 http://localhost:5000
+   Then visit http://localhost:5000
 
-## 📋 功能特性
+## 📋 Features
 
-- ✅ 多频道同时监控录制
-- ✅ 自动检测直播状态
-- ✅ 支持多种录制质量
-- ✅ 自动转码为MP4格式
-- ✅ 生成缩略图和封面
-- ✅ Telegram/Discord通知
-- ✅ Web管理面板
-- ✅ 中英双语支持
-- ✅ 聊天记录录制
+- ✅ Multi-channel simultaneous recording
+- ✅ Automatic live status detection
+- ✅ Multiple recording quality options
+- ✅ Auto-conversion to MP4 format
+- ✅ Thumbnail and cover image generation
+- ✅ Telegram/Discord notifications
+- ✅ Modern web management panel
+- ✅ English/Chinese bilingual support
+- ✅ Chat recording functionality
 
-## ⚙️ 配置说明
+## ⚙️ Configuration
 
-### 认证信息
-- `nid_aut`: Chzzk认证token
-- `nid_ses`: Chzzk会话token
+### Authentication
+- `nid_aut`: Chzzk authentication token
+- `nid_ses`: Chzzk session token
 
-### 录制设置
-- `quality`: 录制质量 (best, worst, 720p, 480p等)
-- `recording_save_root_dir`: 录制文件保存目录
-- `record_chat`: 是否录制聊天
+### Recording Settings
+- `quality`: Recording quality (best, worst, 720p, 480p, etc.)
+- `recording_save_root_dir`: Recording files save directory
+- `record_chat`: Whether to record chat
 
-### 通知设置
-- `use_telegram_bot`: 启用Telegram通知
+### Notification Settings
+- `use_telegram_bot`: Enable Telegram notifications
 - `telegram_bot_token`: Telegram Bot Token
 - `telegram_chat_id`: Telegram Chat ID
-- `use_discord_bot`: 启用Discord通知
+- `use_discord_bot`: Enable Discord notifications
 - `discord_bot_token`: Discord Bot Token
-- `discord_channel_id`: Discord频道ID
+- `discord_channel_id`: Discord Channel ID
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 recorder-release/
-├── main.py                 # 主入口文件
-├── requirements.txt        # Python依赖
+├── main.py                 # Main entry point
+├── requirements.txt        # Python dependencies
 ├── src/
-│   ├── core/              # 核心录制逻辑
-│   ├── api/               # API接口
-│   ├── utils/             # 工具模块
-│   ├── web/               # Web管理面板
-│   └── config/            # 配置文件
-├── docs/                  # 文档
-└── examples/              # 示例脚本
+│   ├── core/              # Core recording logic
+│   ├── api/               # API interfaces
+│   ├── utils/             # Utility modules
+│   ├── web/               # Web management panel
+│   └── config/            # Configuration files
+├── docs/                  # Documentation
+├── examples/              # Example scripts
+└── assets/                # Images and media files
 ```
 
-## 🔧 使用说明
+## 🔧 Usage
 
-### 添加录制频道
-1. 启动Web面板
-2. 在"频道管理"中添加频道
-3. 输入频道ID或用户名
-4. 保存设置
+### Adding Recording Channels
+1. Start the web panel
+2. Add channels in "Channel Management"
+3. Enter channel ID or username
+4. Save settings
 
-### 手动转换
+### Manual Conversion
 ```bash
 python examples/manual_convert.py
 ```
 
-### 更新Cookie
+### Update Cookies
 ```bash
 python examples/update_cookies.py
 ```
 
-## 📝 注意事项
+## 📸 Screenshots
 
-- 首次使用需要配置Chzzk认证信息
-- 确保有足够的磁盘空间用于录制
-- 建议定期清理旧的录制文件
-- Web面板默认运行在5000端口
+### Web Management Panel
+![Web Panel Dashboard](assets/screenshots/web-panel-dashboard.png)
+*Main dashboard showing recording status and channel management*
 
-## 🤝 贡献
+### Channel Management
+![Channel Management](assets/screenshots/channel-management.png)
+*Add and manage recording channels with live preview*
 
-欢迎提交Issue和Pull Request！
+### user_id/Channel ID which you want to rec
+![Channel ID](assets/screenshots/user_id.png)
+*Follow by the png*
 
-## 📄 许可证
+### Cookies Get
+![Cookies Get](assets/screenshots/cookies.png)
+*Record by your account's cookies*
 
-MIT License
+## 📝 Notes
+
+- First-time setup requires Chzzk authentication configuration
+- Ensure sufficient disk space for recording
+- Regularly clean up old recording files
+- Web panel runs on port 5000 by default
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- 📖 Documentation: [docs/](docs/)
+- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/chzzk-recorder/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/chzzk-recorder/discussions)
