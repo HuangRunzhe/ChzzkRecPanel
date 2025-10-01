@@ -40,8 +40,8 @@ Chzzk 라이브 스트림 녹화를 위한 강력한 도구로, 다중 채널 �
 
 1. **Clone the repository / 克隆仓库 / 저장소 클론**
    ```bash
-   git clone https://github.com/yourusername/chzzk-recorder.git
-   cd chzzk-recorder
+   git clone git@github.com:HuangRunzhe/ChzzkRecPanel.git
+   cd ChzzkRecPanel
    ```
 
 2. **Install dependencies / 安装依赖 / 의존성 설치**
