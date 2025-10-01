@@ -52,9 +52,10 @@ config_local.json
 record_list.txt
 *.ts
 *.mp4
-*.jpg
-*.png
-*.webp
+# Exclude images from download directory but allow assets directory
+download/**/*.jpg
+download/**/*.png
+download/**/*.webp
 
 # Temporary files
 temp/
